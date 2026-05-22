@@ -63,10 +63,10 @@ export async function classifyImage(base64Image: string): Promise<ClassifyResult
 
 export function classifyOffline(keyword: string): ClassifyResult {
   const k = keyword.toLowerCase()
-  if (k.includes('botella') || k.includes('plastico'))
-    return { objeto: 'Botella de plastico', categoria: 'reciclable', tipo: 'plastico', tip: 'Tarda 450 anos en degradarse', comoReciclar: 'Enjuaga y deposita en contenedor amarillo', puntos: 10, confianza: 60 }
   if (k.includes('vidrio'))
     return { objeto: 'Envase de vidrio', categoria: 'reciclable', tipo: 'vidrio', tip: 'El vidrio puede reciclarse infinitas veces', comoReciclar: 'Limpia y deposita en contenedor verde', puntos: 10, confianza: 60 }
+  if (k.includes('plastico') || k.includes('botella'))
+    return { objeto: 'Botella de plastico', categoria: 'reciclable', tipo: 'plastico', tip: 'Tarda 450 anos en degradarse', comoReciclar: 'Enjuaga y deposita en contenedor amarillo', puntos: 10, confianza: 60 }
   if (k.includes('carton') || k.includes('papel'))
     return { objeto: 'Carton o papel', categoria: 'reciclable', tipo: 'carton', tip: 'Una tonelada de papel reciclado salva 17 arboles', comoReciclar: 'Dobla seco y deposita en contenedor azul', puntos: 10, confianza: 60 }
   if (k.includes('lata') || k.includes('metal'))

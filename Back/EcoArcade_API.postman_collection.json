@@ -1,0 +1,477 @@
+{
+  "info": {
+    "name": "EcoArcade API",
+    "description": "Colección para probar todos los endpoints del backend EcoArcade.\n\n## Setup\n1. Importar en Postman\n2. Verificar que `base_url` apunte a donde corra el backend\n3. Ejecutar **Auth → Login** primero (auto-guarda el token)\n\n## Flujo recomendado\nLogin → Me → QR Scan → Ranking → Deposit (ok) → Deposit (mismatch) → Dashboard → Admin panel",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "ecoarcade"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3001/api/v1", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "userId", "value": "1", "type": "string" },
+    { "key": "botId", "value": "B3", "type": "string" },
+    { "key": "basureroId", "value": "3", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Autenticación JWT. Login devuelve token + user + rol + permisos.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('Token guardado:', json.token.substring(0, 20) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": null,
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"mauro@eco.com\",\n  \"password\": \"demo123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Scan & Deposit",
+      "description": "Escaneo QR de basurero y depósito de residuos.",
+      "item": [
+        {
+          "name": "QR Scan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/scan?botId={{botId}}",
+              "host": ["{{base_url}}"],
+              "path": ["scan"],
+              "query": [
+                { "key": "botId", "value": "{{botId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deposit — OK",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"\",\n  \"botId\": \"{{botId}}\",\n  \"offlineKeyword\": \"botella de plastico\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/bins/deposit",
+              "host": ["{{base_url}}"],
+              "path": ["bins", "deposit"]
+            }
+          }
+        },
+        {
+          "name": "Deposit — TYPE_MISMATCH",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"image\": \"\",\n  \"botId\": \"{{botId}}\",\n  \"offlineKeyword\": \"botella de vidrio\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/bins/deposit",
+              "host": ["{{base_url}}"],
+              "path": ["bins", "deposit"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Classify",
+      "description": "Clasificación de residuos por IA (Claude Vision) con fallback offline.",
+      "item": [
+        {
+          "name": "Classify",
+          "request": {
+            "auth": null,
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offlineKeyword\": \"lata de aluminio\",\n  \"userId\": {{userId}},\n  \"basureroId\": {{basureroId}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/classify",
+              "host": ["{{base_url}}"],
+              "path": ["classify"]
+            }
+          }
+        },
+        {
+          "name": "Recientes",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/classify/recientes",
+              "host": ["{{base_url}}"],
+              "path": ["classify", "recientes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Ranking, perfiles y creación de usuarios.",
+      "item": [
+        {
+          "name": "Ranking",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/ranking",
+              "host": ["{{base_url}}"],
+              "path": ["users", "ranking"]
+            }
+          }
+        },
+        {
+          "name": "Get by ID",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get by RFID",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/rfid/ABC123",
+              "host": ["{{base_url}}"],
+              "path": ["users", "rfid", "ABC123"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "auth": null,
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rfid\": \"TEST999\",\n  \"nombre\": \"Test Postman\",\n  \"email\": \"test@postman.com\",\n  \"password\": \"test123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Basureros",
+      "description": "Gestión de basureros inteligentes.",
+      "item": [
+        {
+          "name": "List all",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/basureros",
+              "host": ["{{base_url}}"],
+              "path": ["basureros"]
+            }
+          }
+        },
+        {
+          "name": "Get by ID",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/basureros/{{basureroId}}",
+              "host": ["{{base_url}}"],
+              "path": ["basureros", "{{basureroId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update nivel (ESP32)",
+          "request": {
+            "auth": null,
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nivelActual\": 85,\n  \"bateria\": 60\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/basureros/{{basureroId}}/nivel",
+              "host": ["{{base_url}}"],
+              "path": ["basureros", "{{basureroId}}", "nivel"]
+            }
+          }
+        },
+        {
+          "name": "Update nivel por codigo",
+          "request": {
+            "auth": null,
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nivelActual\": 50,\n  \"bateria\": 80\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/basureros/codigo/B1/nivel",
+              "host": ["{{base_url}}"],
+              "path": ["basureros", "codigo", "B1", "nivel"]
+            }
+          }
+        },
+        {
+          "name": "Create (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"B7\",\n  \"nombre\": \"Basurero Test\",\n  \"ubicacion\": \"Postman\",\n  \"tiposAcepta\": \"plastico,papel\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/basureros",
+              "host": ["{{base_url}}"],
+              "path": ["basureros"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Retos",
+      "description": "Retos gamificados con progreso por usuario.",
+      "item": [
+        {
+          "name": "List all",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/retos",
+              "host": ["{{base_url}}"],
+              "path": ["retos"]
+            }
+          }
+        },
+        {
+          "name": "User progress",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/retos/usuario/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["retos", "usuario", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Reto Postman\",\n  \"descripcion\": \"Recicla 3 veces\",\n  \"tipo\": \"cantidad\",\n  \"meta\": 3,\n  \"xpRecompensa\": 100,\n  \"icono\": \"🧪\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/retos",
+              "host": ["{{base_url}}"],
+              "path": ["retos"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "description": "Estadísticas y dashboards.",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stats",
+              "host": ["{{base_url}}"],
+              "path": ["stats"]
+            }
+          }
+        },
+        {
+          "name": "Admin panel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stats/admin",
+              "host": ["{{base_url}}"],
+              "path": ["stats", "admin"]
+            }
+          }
+        },
+        {
+          "name": "Impacto",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/stats/impacto",
+              "host": ["{{base_url}}"],
+              "path": ["stats", "impacto"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ESP32 & Health",
+      "description": "Health checks y comunicación con ESP32.",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3001/health",
+              "host": ["http://localhost:3001"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "ESP32 Health",
+          "request": {
+            "auth": null,
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/esp32/health",
+              "host": ["{{base_url}}"],
+              "path": ["esp32", "health"]
+            }
+          }
+        },
+        {
+          "name": "ESP32 Comando",
+          "request": {
+            "auth": null,
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoria\": \"reciclable\",\n  \"led\": \"azul\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/esp32/comando",
+              "host": ["{{base_url}}"],
+              "path": ["esp32", "comando"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
