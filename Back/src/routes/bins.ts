@@ -52,7 +52,33 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
     const tiposAceptados = basurero.tiposAcepta.split(',')
     const mismatch = !tiposAceptados.includes(result.tipo)
 
-    const xpGanado = result.categoria === 'no_reciclable' ? 5 : 15
+    const esError = result.categoria === 'error'
+    const xpGanado = esError ? 0 : 15
+
+    if (esError) {
+      const scan = await prisma.scan.create({
+        data: {
+          objeto: result.objeto,
+          categoria: result.categoria,
+          tipo: result.tipo,
+          tip: result.tip,
+          comoReciclar: result.comoReciclar,
+          puntos: 0,
+          xpGanado: 0,
+          confianza: modoOffline ? 0 : result.confianza,
+          errorTipo: true,
+          userId,
+          basureroId: basurero.id,
+        },
+      })
+      res.status(422).json({
+        error: 'Residuo no admitido. Solo clasificamos plastico, papel y aluminio.',
+        code: 'MATERIAL_NOT_ALLOWED',
+        tipoDetectado: result.tipo,
+        scanId: scan.id,
+      })
+      return
+    }
 
     const scan = await prisma.scan.create({
       data: {

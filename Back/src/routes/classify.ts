@@ -6,9 +6,8 @@ import { requireAuth, AuthRequest } from '../middleware/auth'
 const router = Router()
 
 const LED_MAP: Record<string, string> = {
-  organico: 'verde',
   reciclable: 'azul',
-  no_reciclable: 'rojo',
+  error: 'rojo',
 }
 
 // POST /api/classify
@@ -38,7 +37,8 @@ router.post('/', async (req: Request, res: Response) => {
       modoOffline = true
     }
 
-    const xpGanado = result.categoria === 'no_reciclable' ? 5 : 15
+    const esError = result.categoria === 'error'
+    const xpGanado = esError ? 0 : 15
 
     const scan = await prisma.scan.create({
       data: {
@@ -47,7 +47,7 @@ router.post('/', async (req: Request, res: Response) => {
         tipo: result.tipo,
         tip: result.tip,
         comoReciclar: result.comoReciclar,
-        puntos: result.puntos,
+        puntos: esError ? 0 : result.puntos,
         xpGanado,
         confianza: modoOffline ? 0 : result.confianza,
         userId: userId || null,
@@ -56,7 +56,7 @@ router.post('/', async (req: Request, res: Response) => {
     })
 
     let usuarioActualizado: { puntos: number; xp: number } | null = null
-    if (userId) {
+    if (userId && !esError) {
       const user = await prisma.user.update({
         where: { id: userId },
         data: { puntos: { increment: result.puntos }, xp: { increment: xpGanado } },
@@ -72,7 +72,7 @@ router.post('/', async (req: Request, res: Response) => {
       await actualizarRetos(userId, result.tipo, basureroId)
     }
 
-    if (basureroId) {
+    if (basureroId && !esError) {
       const basurero = await prisma.basurero.findUnique({ where: { id: basureroId } })
       if (basurero) {
         const nuevoNivel = Math.min(100, basurero.nivelActual + 3)
@@ -81,13 +81,14 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
 
-    enviarComandoESP32(result.categoria, LED_MAP[result.categoria])
+    if (!esError) enviarComandoESP32(result.categoria, LED_MAP[result.categoria])
 
     res.json({
       ...result,
       scanId: scan.id,
       xpGanado,
       modo: modoOffline ? 'offline' : 'ai',
+      error: esError ? 'Residuo no admitido. Solo clasificamos plastico, papel y aluminio.' : undefined,
       usuario: usuarioActualizado
         ? { puntos: usuarioActualizado.puntos, xp: usuarioActualizado.xp + xpGanado }
         : null,

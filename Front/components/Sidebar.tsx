@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Map, Trophy, Star, Gift, Sparkles, ShieldAlert, Settings, LogOut } from "lucide-react";
+import { Home, Map, Trophy, Star, Gift, ScanLine, ShieldAlert, Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 const menuItems = [
@@ -11,7 +11,7 @@ const menuItems = [
   { name: "Ranking", href: "/ranking", icon: Trophy },
   { name: "Challenges", href: "/retos", icon: Star },
   { name: "Recompensas", href: "/recompensas", icon: Gift },
-  { name: "Insights", href: "/insights", icon: Sparkles },
+  { name: "Escaneo", href: "/escaneo", icon: ScanLine },
   { name: "Admin", href: "/admin", icon: ShieldAlert },
 ];
 

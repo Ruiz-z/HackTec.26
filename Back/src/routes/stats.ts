@@ -5,8 +5,7 @@ import { requirePermiso, AuthRequest } from '../middleware/auth'
 const router = Router()
 
 const CO2_MAP: Record<string, number> = {
-  plastico: 0.5, vidrio: 0.8, carton: 0.3,
-  papel: 0.2, metal: 1.2, organico: 0.1, basura: 0.0,
+  plastico: 0.5, papel: 0.2, aluminio: 0.4, error: 0.0,
 }
 
 // GET /api/stats
@@ -46,9 +45,8 @@ router.get('/', async (_req: Request, res: Response) => {
       totalHoy, totalGeneral, totalUsuarios,
       co2Evitado: Math.round(co2Evitado * 100) / 100,
       basurerosAlerta,
-      reciclables:   porCategoria.find(c => c.categoria === 'reciclable')?._count.id    ?? 0,
-      organicos:     porCategoria.find(c => c.categoria === 'organico')?._count.id      ?? 0,
-      noReciclables: porCategoria.find(c => c.categoria === 'no_reciclable')?._count.id ?? 0,
+      reciclables: porCategoria.find(c => c.categoria === 'reciclable')?._count.id ?? 0,
+      errores:     porCategoria.find(c => c.categoria === 'error')?._count.id      ?? 0,
       porCategoria, porTipo, scansPorHora, ranking,
     })
   } catch (error) {
@@ -78,7 +76,7 @@ router.get('/admin', requirePermiso('ver_admin_panel'), async (_req: AuthRequest
         GROUP BY dia ORDER BY dia`,
     ])
 
-    const correctos = await prisma.scan.count({ where: { categoria: { in: ['reciclable', 'organico'] } } })
+    const correctos = await prisma.scan.count({ where: { categoria: 'reciclable' } })
     const tasaClasificacion = totalScans > 0 ? Math.round((correctos / totalScans) * 100) : 0
 
     res.json({
@@ -100,10 +98,9 @@ router.get('/impacto', async (_req: Request, res: Response) => {
     const todos = await prisma.scan.findMany({ select: { tipo: true, categoria: true } })
     const totalCO2 = todos.reduce((acc, s) => acc + (CO2_MAP[s.tipo] ?? 0), 0)
     const totalReciclables = todos.filter(s => s.categoria === 'reciclable').length
-    const totalOrganicos   = todos.filter(s => s.categoria === 'organico').length
 
     res.json({
-      totalScans: todos.length, totalReciclables, totalOrganicos,
+      totalScans: todos.length, totalReciclables,
       co2Total: Math.round(totalCO2 * 100) / 100,
       arbolesEquivalentes: Math.round(totalCO2 / 21),
       litrosAguaAhorrados: Math.round(totalReciclables * 2.5),
