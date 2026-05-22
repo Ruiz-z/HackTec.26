@@ -1,14 +1,5 @@
-import { HeaderVista } from "@/components/HeaderVista"
-import { MapaBasureros } from "@/components/ruta/MapaBasureros"
+import { redirect } from "next/navigation"
 
-export default function RutaPage() {
-  return (
-    <div>
-      <HeaderVista
-        titulo="Mi Ruta"
-        subtitulo="Puntos de reciclaje cercanos y recompensas disponibles"
-      />
-      <MapaBasureros />
-    </div>
-  )
+export default function RootPage() {
+  redirect("/login")
 }
