@@ -1,0 +1,113 @@
+generator client {
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique
+  descripcion String?
+  users       User[]
+  permisos    Permiso[]
+}
+
+model Permiso {
+  id          Int    @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  roleId      Int
+  role        Role   @relation(fields: [roleId], references: [id])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  rfid      String   @unique
+  email     String   @unique
+  password  String
+  nombre    String
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  puntos    Int      @default(0)
+  xp        Int      @default(0)
+  nivel     String   @default("Eco Principiante")
+  nivelNum  Int      @default(1)
+  scans     Scan[]
+  progresos ProgresoReto[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Basurero {
+  id          Int      @id @default(autoincrement())
+  codigo      String   @unique
+  nombre      String
+  ubicacion   String
+  lat         Float?
+  lng         Float?
+  capacidad   Int      @default(100)
+  nivelActual Int      @default(0)
+  estado      String   @default("disponible")
+  tiposAcepta String   @default("plastico,papel,carton,metal,vidrio,organico")
+  bateria     Int      @default(100)
+  online      Boolean  @default(true)
+  scans       Scan[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Scan {
+  id           Int       @id @default(autoincrement())
+  objeto       String
+  categoria    String
+  tipo         String
+  tip          String
+  comoReciclar String
+  puntos       Int       @default(10)
+  xpGanado     Int       @default(15)
+  confianza    Int       @default(90)
+  errorTipo    Boolean   @default(false)
+  userId       Int?
+  basureroId   Int?
+  user         User?     @relation(fields: [userId], references: [id])
+  basurero     Basurero? @relation(fields: [basureroId], references: [id])
+  createdAt    DateTime  @default(now())
+}
+
+model Reto {
+  id           Int            @id @default(autoincrement())
+  titulo       String
+  descripcion  String
+  tipo         String
+  meta         Int
+  xpRecompensa Int            @default(100)
+  icono        String         @default("🌿")
+  activo       Boolean        @default(true)
+  progresos    ProgresoReto[]
+  createdAt    DateTime       @default(now())
+}
+
+model ProgresoReto {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  retoId       Int
+  progreso     Int       @default(0)
+  completado   Boolean   @default(false)
+  completadoAt DateTime?
+  user         User      @relation(fields: [userId], references: [id])
+  reto         Reto      @relation(fields: [retoId], references: [id])
+  createdAt    DateTime  @default(now())
+
+  @@unique([userId, retoId])
+}
+
+model Tip {
+  id        Int    @id @default(autoincrement())
+  categoria String
+  tipo      String
+  contenido String
+}

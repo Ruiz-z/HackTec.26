@@ -1,0 +1,18 @@
+services:
+  backend-dev:
+    build:
+      context: .
+      target: deps
+    container_name: ecosort-back-dev
+    ports:
+      - "3001:3001"
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: sh -c "pnpm prisma generate && pnpm prisma migrate dev --name init && pnpm db:seed && pnpm dev"
+    restart: unless-stopped
