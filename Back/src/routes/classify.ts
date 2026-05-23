@@ -5,12 +5,6 @@ import { requireAuth, AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
-const LED_MAP: Record<string, string> = {
-  organico: 'verde',
-  reciclable: 'azul',
-  no_reciclable: 'rojo',
-}
-
 // POST /api/classify
 // Body: { image?: string (base64), userId?: number, basureroId?: number, offlineKeyword?: string }
 router.post('/', async (req: Request, res: Response) => {
@@ -28,17 +22,26 @@ router.post('/', async (req: Request, res: Response) => {
     if (image) {
       try {
         result = await classifyImage(image)
-      } catch {
-        console.warn('Claude API no disponible, modo offline')
-        result = classifyOffline(offlineKeyword || 'residuo')
-        modoOffline = true
+      } catch (err) {
+        console.warn('Claude API falló:', (err as Error).message)
+        if (offlineKeyword) {
+          result = classifyOffline(offlineKeyword)
+          modoOffline = true
+        } else {
+          res.status(503).json({
+            error: 'Clasificación IA no disponible. Intenta con una keyword offline o verifica ANTHROPIC_API_KEY.',
+            code: 'AI_UNAVAILABLE',
+          })
+          return
+        }
       }
     } else {
       result = classifyOffline(offlineKeyword!)
       modoOffline = true
     }
 
-    const xpGanado = result.categoria === 'no_reciclable' ? 5 : 15
+    const esError = result.categoria === 'error'
+    const xpGanado = esError ? 0 : 15
 
     const scan = await prisma.scan.create({
       data: {
@@ -47,7 +50,7 @@ router.post('/', async (req: Request, res: Response) => {
         tipo: result.tipo,
         tip: result.tip,
         comoReciclar: result.comoReciclar,
-        puntos: result.puntos,
+        puntos: esError ? 0 : result.puntos,
         xpGanado,
         confianza: modoOffline ? 0 : result.confianza,
         userId: userId || null,
@@ -56,7 +59,7 @@ router.post('/', async (req: Request, res: Response) => {
     })
 
     let usuarioActualizado: { puntos: number; xp: number } | null = null
-    if (userId) {
+    if (userId && !esError) {
       const user = await prisma.user.update({
         where: { id: userId },
         data: { puntos: { increment: result.puntos }, xp: { increment: xpGanado } },
@@ -72,7 +75,7 @@ router.post('/', async (req: Request, res: Response) => {
       await actualizarRetos(userId, result.tipo, basureroId)
     }
 
-    if (basureroId) {
+    if (basureroId && !esError) {
       const basurero = await prisma.basurero.findUnique({ where: { id: basureroId } })
       if (basurero) {
         const nuevoNivel = Math.min(100, basurero.nivelActual + 3)
@@ -81,13 +84,14 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
 
-    enviarComandoESP32(result.categoria, LED_MAP[result.categoria])
+    if (!esError) enviarComandoESP32(result.tipo)
 
     res.json({
       ...result,
       scanId: scan.id,
       xpGanado,
       modo: modoOffline ? 'offline' : 'ai',
+      error: esError ? 'Residuo no admitido. Solo clasificamos plastico, papel y aluminio.' : undefined,
       usuario: usuarioActualizado
         ? { puntos: usuarioActualizado.puntos, xp: usuarioActualizado.xp + xpGanado }
         : null,
@@ -153,15 +157,20 @@ async function actualizarRetos(userId: number, tipo: string, basureroId?: number
   }
 }
 
-async function enviarComandoESP32(categoria: string, led: string) {
-  if (!process.env.ESP32_URL) return
+const MAPA_TIPO_ESP32: Record<string, string> = {
+  plastico: 'plastico',
+  papel: 'papel',
+  aluminio: 'aluminio',
+}
+
+async function enviarComandoESP32(tipo: string) {
+  if (!process.env.ESP32_DOOR_URL || !process.env.ESP32_SORTER_URL) return
+  const endpoint = MAPA_TIPO_ESP32[tipo] || tipo
   try {
-    await fetch(`${process.env.ESP32_URL}/comando`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria, led }),
-      signal: AbortSignal.timeout(3000),
-    })
+    await fetch(`${process.env.ESP32_DOOR_URL}/leido`, { signal: AbortSignal.timeout(5000) })
+    await new Promise(r => setTimeout(r, 3000))
+    await fetch(`${process.env.ESP32_SORTER_URL}/${endpoint}`, { signal: AbortSignal.timeout(5000) })
+    console.log(`ESP32: puerta abierta, clasificado como ${tipo} → ${endpoint}`)
   } catch {
     console.warn('ESP32 no disponible')
   }

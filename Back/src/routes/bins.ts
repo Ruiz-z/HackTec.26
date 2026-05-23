@@ -5,12 +5,6 @@ import { classifyImage, classifyOffline } from '../lib/claude'
 
 const router = Router()
 
-const LED_MAP: Record<string, string> = {
-  organico: 'verde',
-  reciclable: 'azul',
-  no_reciclable: 'rojo',
-}
-
 // POST /api/v1/bins/deposit
 // Body: { image?: string, botId: string, offlineKeyword?: string }
 router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => {
@@ -52,7 +46,33 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
     const tiposAceptados = basurero.tiposAcepta.split(',')
     const mismatch = !tiposAceptados.includes(result.tipo)
 
-    const xpGanado = result.categoria === 'no_reciclable' ? 5 : 15
+    const esError = result.categoria === 'error'
+    const xpGanado = esError ? 0 : 15
+
+    if (esError) {
+      const scan = await prisma.scan.create({
+        data: {
+          objeto: result.objeto,
+          categoria: result.categoria,
+          tipo: result.tipo,
+          tip: result.tip,
+          comoReciclar: result.comoReciclar,
+          puntos: 0,
+          xpGanado: 0,
+          confianza: modoOffline ? 0 : result.confianza,
+          errorTipo: true,
+          userId,
+          basureroId: basurero.id,
+        },
+      })
+      res.status(422).json({
+        error: 'Residuo no admitido. Solo clasificamos plastico, metal y aluminio.',
+        code: 'MATERIAL_NOT_ALLOWED',
+        tipoDetectado: result.tipo,
+        scanId: scan.id,
+      })
+      return
+    }
 
     const scan = await prisma.scan.create({
       data: {
@@ -100,7 +120,7 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
       await prisma.basurero.update({ where: { id: basurero.id }, data: { nivelActual: nuevoNivelBas, estado } })
     }
 
-    enviarComandoESP32(result.categoria, LED_MAP[result.categoria])
+    enviarComandoESP32(result.tipo)
 
     res.json({
       ...result,
@@ -124,15 +144,20 @@ function calcularNivel(xp: number): { nombre: string; num: number } {
   return { nombre: 'Eco Principiante', num: 1 }
 }
 
-async function enviarComandoESP32(categoria: string, led: string) {
-  if (!process.env.ESP32_URL) return
+const MAPA_TIPO_ESP32: Record<string, string> = {
+  plastico: 'plastico',
+  papel: 'papel',
+  aluminio: 'aluminio',
+}
+
+async function enviarComandoESP32(tipo: string) {
+  if (!process.env.ESP32_DOOR_URL || !process.env.ESP32_SORTER_URL) return
+  const endpoint = MAPA_TIPO_ESP32[tipo] || tipo
   try {
-    await fetch(`${process.env.ESP32_URL}/comando`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria, led }),
-      signal: AbortSignal.timeout(3000),
-    })
+    await fetch(`${process.env.ESP32_DOOR_URL}/leido`, { signal: AbortSignal.timeout(5000) })
+    await new Promise(r => setTimeout(r, 3000))
+    await fetch(`${process.env.ESP32_SORTER_URL}/${endpoint}`, { signal: AbortSignal.timeout(5000) })
+    console.log(`ESP32: puerta abierta, clasificado como ${tipo} → ${endpoint}`)
   } catch {
     console.warn('ESP32 no disponible')
   }

@@ -1,7 +1,10 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { QrCode, MapPin, FileText, PlayCircle } from "lucide-react";
 
 export default function HomePage() {
+  const router = useRouter();
+
   return (
     <div className="max-w-5xl mx-auto animate-fade-in relative min-h-[calc(100vh-6rem)] flex flex-col justify-between select-none">
       
@@ -18,19 +21,22 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch mb-6">
           
-          <div className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-2xs flex flex-col justify-between items-center text-center">
+          <div
+            onClick={() => router.push("/escaneo")}
+            className="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-2xs flex flex-col justify-between items-center text-center cursor-pointer hover:shadow-md transition-all group"
+          >
             <div className="flex justify-between items-center w-full mb-6">
               <h3 className="text-sm font-bold text-slate-900 tracking-tight">Tú Eco-Pass Digital</h3>
               <QrCode className="w-4 h-4 text-[#046a53]" />
             </div>
 
-            <div className="w-56 h-56 rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100 border border-slate-200/80 p-6 flex flex-col items-center justify-center relative shadow-inner">
-              <div className="w-full h-full border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center opacity-40">
+            <div className="w-56 h-56 rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100 border border-slate-200/80 p-6 flex flex-col items-center justify-center relative shadow-inner group-hover:border-[#046a53]/30 transition-colors">
+              <div className="w-full h-full border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity">
                 <QrCode className="w-24 h-24 text-slate-400 stroke-[1.2]" />
               </div>
             </div>
 
-            <p className="text-xs font-mono font-bold text-slate-500 mt-6 tracking-wide">
+            <p className="text-xs font-mono font-bold text-slate-500 mt-6 tracking-wide group-hover:text-[#046a53] transition-colors">
               Escanea para iniciar
             </p>
           </div>
@@ -89,7 +95,10 @@ export default function HomePage() {
       </div>
 
       <div className="flex justify-end w-full mt-8 lg:mt-0">
-        <button className="bg-[#046a53] hover:bg-[#035442] text-white font-bold py-3.5 px-6 rounded-xl text-xs tracking-wider flex items-center gap-2.5 shadow-md transition-all hover:scale-102 cursor-pointer uppercase">
+        <button
+          onClick={() => router.push("/escaneo")}
+          className="bg-[#046a53] hover:bg-[#035442] text-white font-bold py-3.5 px-6 rounded-xl text-xs tracking-wider flex items-center gap-2.5 shadow-md transition-all hover:scale-102 cursor-pointer uppercase"
+        >
           <PlayCircle className="w-4 h-4 text-emerald-300" />
           <span>Iniciar Depósito</span>
         </button>
