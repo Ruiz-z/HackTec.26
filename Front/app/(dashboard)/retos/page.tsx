@@ -6,8 +6,8 @@ import { Leaf, Award, Recycle, Flame, Store, CheckCircle2 } from "lucide-react";
 const retosIniciales = [
   {
     id: "r1",
-    titulo: "Héroe del Vidrio",
-    descripcion: "Deposita al menos 5 botellas de vidrio en los contenedores verdes esta semana.",
+    titulo: "Rey del Plástico",
+    descripcion: "Deposita al menos 5 botellas de plástico en los contenedores amarillos esta semana.",
     progreso: 3,
     meta: 5,
     xp: 250,

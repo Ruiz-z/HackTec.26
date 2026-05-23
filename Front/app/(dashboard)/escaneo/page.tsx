@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, SwitchCamera, Sparkles, Lightbulb, CheckCircle2, CameraIcon } from "lucide-react";
 import { api } from "@/lib/api";
+import ModalTipScan from "@/components/escaneo/ModalTipScan";
 
 export default function EscaneoJuegoPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -12,6 +13,7 @@ export default function EscaneoJuegoPage() {
   const [errorHardware, setErrorHardware] = useState<string | null>(null);
   const [capturando, setCapturando] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   useEffect(() => {
     listarCamaras();
@@ -79,6 +81,7 @@ export default function EscaneoJuegoPage() {
     try {
       const res = await api.classifyImage(base64);
       setResultado(res);
+      if (res && res.categoria !== 'error' && !res.error) setModalAbierto(true);
     } catch (err: any) {
       setResultado({ error: err.message || "Error al clasificar" });
     } finally {
@@ -88,6 +91,9 @@ export default function EscaneoJuegoPage() {
 
   return (
     <div className="max-w-7xl mx-auto animate-fade-in select-none">
+      {modalAbierto && resultado && (
+        <ModalTipScan resultado={resultado} onClose={() => setModalAbierto(false)} />
+      )}
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 w-full mb-6">
         <div>
