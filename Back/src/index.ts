@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 
+import tipsRouter      from './routes/tips'
 import classifyRouter  from './routes/classify'
 import usersRouter     from './routes/users'
 import statsRouter     from './routes/stats'
@@ -30,6 +31,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'EcoArcade Backend', version: '2.0.0', timestamp: new Date().toISOString() })
 })
 
+app.use('/api/v1/tips',      tipsRouter)
 app.use('/api/v1/classify',  classifyRouter)
 app.use('/api/v1/users',     usersRouter)
 app.use('/api/v1/stats',     statsRouter)
