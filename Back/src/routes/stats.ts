@@ -5,7 +5,7 @@ import { requirePermiso, AuthRequest } from '../middleware/auth'
 const router = Router()
 
 const CO2_MAP: Record<string, number> = {
-  plastico: 0.5, papel: 0.2, aluminio: 0.4, error: 0.0,
+  plastico: 0.5, papel: 0.4, aluminio: 0.4, error: 0.0,
 }
 
 // GET /api/stats

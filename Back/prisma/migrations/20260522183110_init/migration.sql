@@ -26,6 +26,8 @@ CREATE TABLE "User" (
     "xp" INTEGER NOT NULL DEFAULT 0,
     "nivel" TEXT NOT NULL DEFAULT 'Eco Principiante',
     "nivelNum" INTEGER NOT NULL DEFAULT 1,
+    "resetToken" TEXT,
+    "resetTokenExpiry" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "User_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Role" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -113,6 +115,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Basurero_codigo_key" ON "Basurero"("codigo");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_resetToken_key" ON "User"("resetToken");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ProgresoReto_userId_retoId_key" ON "ProgresoReto"("userId", "retoId");

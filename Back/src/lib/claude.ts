@@ -31,15 +31,24 @@ Reglas:
 - puntos: 10 si es reciclable, 0 si es error`
 
 export async function classifyImage(base64Image: string): Promise<ClassifyResult> {
+  if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === 'sk-ant-XXXXXXXXX') {
+    console.warn('ANTHROPIC_API_KEY no configurada o es placeholder')
+    throw new Error('ANTHROPIC_API_KEY no configurada o es placeholder')
+  }
+  console.log('🤖 Clasificando con Claude...')
+
+  const model = process.env.CLAUDE_MODEL || 'claude-sonnet-4-6'
+  console.log(`Modelo: ${model}`)
+
   const response = await fetch(ANTHROPIC_API_URL, {
     method: 'POST',
     headers: {
-      'x-api-key': process.env.ANTHROPIC_API_KEY!,
+      'x-api-key': process.env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model,
       max_tokens: 400,
       messages: [{
         role: 'user',
@@ -54,10 +63,14 @@ export async function classifyImage(base64Image: string): Promise<ClassifyResult
     }),
   })
 
-  if (!response.ok) throw new Error(`Claude API error ${response.status}`)
+  if (!response.ok) {
+    const body = await response.text().catch(() => '')
+    throw new Error(`Claude API error ${response.status}: ${body.slice(0, 200)}`)
+  }
 
   const data = await response.json() as { content: { text: string }[] }
-  const clean = data.content[0].text.replace(/```json|```/g, '').trim()
+  const raw = data.content[0].text
+  const clean = raw.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim()
   return JSON.parse(clean) as ClassifyResult
 }
 
@@ -65,9 +78,9 @@ export function classifyOffline(keyword: string): ClassifyResult {
   const k = keyword.toLowerCase()
   if (k.includes('plastico') || k.includes('botella') || k.includes('pet'))
     return { objeto: 'Botella de plastico', categoria: 'reciclable', tipo: 'plastico', tip: 'Tarda 450 anos en degradarse', comoReciclar: 'Enjuaga y deposita en contenedor amarillo', puntos: 10, confianza: 60 }
-  if (k.includes('papel') || k.includes('hoja') || k.includes('periodico'))
-    return { objeto: 'Papel', categoria: 'reciclable', tipo: 'papel', tip: 'Una tonelada de papel reciclado salva 17 arboles', comoReciclar: 'Dobla seco y deposita en contenedor azul', puntos: 10, confianza: 60 }
-  if (k.includes('aluminio') || k.includes('lata') || k.includes('metal'))
-    return { objeto: 'Lata de aluminio', categoria: 'reciclable', tipo: 'aluminio', tip: 'Reciclar aluminio usa 95% menos energia', comoReciclar: 'Aplasta y deposita en contenedor amarillo', puntos: 10, confianza: 60 }
+  if (k.includes('papel') || k.includes('carton') || k.includes('hoja') || k.includes('periodico'))
+    return { objeto: 'Papel y carton', categoria: 'reciclable', tipo: 'papel', tip: 'Reciclar una tonelada de papel salva 17 arboles', comoReciclar: 'Deposita limpio y seco en contenedor azul', puntos: 10, confianza: 60 }
+  if (k.includes('aluminio') || k.includes('lata') || k.includes('papalate'))
+    return { objeto: 'Aluminio', categoria: 'reciclable', tipo: 'aluminio', tip: 'Reciclar aluminio usa 95% menos energia', comoReciclar: 'Aplasta y deposita en contenedor amarillo', puntos: 10, confianza: 60 }
   return { objeto: 'Residuo no admitido', categoria: 'error', tipo: 'error', tip: 'Solo aceptamos plastico, papel y aluminio', comoReciclar: 'Retira el residuo y separalo correctamente', puntos: 0, confianza: 100 }
 }

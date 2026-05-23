@@ -36,6 +36,8 @@ model User {
   xp        Int      @default(0)
   nivel     String   @default("Eco Principiante")
   nivelNum  Int      @default(1)
+  resetToken       String?  @unique
+  resetTokenExpiry DateTime?
   scans     Scan[]
   progresos ProgresoReto[]
   createdAt DateTime @default(now())

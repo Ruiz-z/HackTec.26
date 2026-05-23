@@ -5,11 +5,6 @@ import { requireAuth, AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
-const LED_MAP: Record<string, string> = {
-  reciclable: 'azul',
-  error: 'rojo',
-}
-
 // POST /api/classify
 // Body: { image?: string (base64), userId?: number, basureroId?: number, offlineKeyword?: string }
 router.post('/', async (req: Request, res: Response) => {
@@ -27,10 +22,18 @@ router.post('/', async (req: Request, res: Response) => {
     if (image) {
       try {
         result = await classifyImage(image)
-      } catch {
-        console.warn('Claude API no disponible, modo offline')
-        result = classifyOffline(offlineKeyword || 'residuo')
-        modoOffline = true
+      } catch (err) {
+        console.warn('Claude API falló:', (err as Error).message)
+        if (offlineKeyword) {
+          result = classifyOffline(offlineKeyword)
+          modoOffline = true
+        } else {
+          res.status(503).json({
+            error: 'Clasificación IA no disponible. Intenta con una keyword offline o verifica ANTHROPIC_API_KEY.',
+            code: 'AI_UNAVAILABLE',
+          })
+          return
+        }
       }
     } else {
       result = classifyOffline(offlineKeyword!)
@@ -81,7 +84,7 @@ router.post('/', async (req: Request, res: Response) => {
       }
     }
 
-    if (!esError) enviarComandoESP32(result.categoria, LED_MAP[result.categoria])
+    if (!esError) enviarComandoESP32(result.tipo)
 
     res.json({
       ...result,
@@ -154,15 +157,20 @@ async function actualizarRetos(userId: number, tipo: string, basureroId?: number
   }
 }
 
-async function enviarComandoESP32(categoria: string, led: string) {
-  if (!process.env.ESP32_URL) return
+const MAPA_TIPO_ESP32: Record<string, string> = {
+  plastico: 'plastico',
+  papel: 'papel',
+  aluminio: 'aluminio',
+}
+
+async function enviarComandoESP32(tipo: string) {
+  if (!process.env.ESP32_DOOR_URL || !process.env.ESP32_SORTER_URL) return
+  const endpoint = MAPA_TIPO_ESP32[tipo] || tipo
   try {
-    await fetch(`${process.env.ESP32_URL}/comando`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria, led }),
-      signal: AbortSignal.timeout(3000),
-    })
+    await fetch(`${process.env.ESP32_DOOR_URL}/leido`, { signal: AbortSignal.timeout(5000) })
+    await new Promise(r => setTimeout(r, 3000))
+    await fetch(`${process.env.ESP32_SORTER_URL}/${endpoint}`, { signal: AbortSignal.timeout(5000) })
+    console.log(`ESP32: puerta abierta, clasificado como ${tipo} → ${endpoint}`)
   } catch {
     console.warn('ESP32 no disponible')
   }
