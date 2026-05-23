@@ -90,7 +90,7 @@ export default function HomePage() {
           <div className="w-8 h-8 bg-[#fcc419] rounded-lg flex items-center justify-center text-slate-950 shrink-0 font-bold">
             💡
           </div>
-          <span className="font-mono text-xs text-slate-500">{"{{DATA:DOCUMENT:DOCUMENT_2}}"}</span>
+          <span className="font-mono text-xs text-slate-500">Eco-Pass Digital</span>
         </div>
       </div>
 

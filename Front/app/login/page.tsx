@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Eye, Gamepad2 } from "lucide-react";
+import { Mail, Lock, Eye, Gamepad2, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
@@ -95,9 +96,9 @@ export default function LoginPage() {
           </div>
 
           <div className="text-right">
-            <a href="#" className="text-[10px] font-mono font-bold text-[#046a53] hover:underline">
+            <Link href="/forgot-password" className="text-[10px] font-mono font-bold text-[#046a53] hover:underline">
               Recuperar contraseña
-            </a>
+            </Link>
           </div>
 
           <div className="pt-2">
