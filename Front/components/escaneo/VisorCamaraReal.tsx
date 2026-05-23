@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, CameraDevice } from "html5-qrcode";
 import { Camera, VideoOff, SwitchCamera } from "lucide-react";
 
 interface VisorProps {
@@ -8,7 +8,7 @@ interface VisorProps {
 }
 
 export default function VisorCamaraReal({ onQrDetectado }: VisorProps) {
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
   const [camaraActiva, setCamaraActiva] = useState(false);
   const [errorCamara, setErrorCamara] = useState<string | null>(null);

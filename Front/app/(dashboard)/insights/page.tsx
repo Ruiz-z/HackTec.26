@@ -126,7 +126,7 @@ export default function InsightsPage() {
         <div className="md:col-span-2 bg-white border border-slate-200/60 p-5 rounded-2xl flex flex-col justify-between">
           <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Ficha Técnica</span>
           <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl text-center font-mono text-[11px] text-slate-400 mt-2">
-            {"{{DATA:DOCUMENT:DOCUMENT_6}}"}
+            Datos actualizados en tiempo real
           </div>
         </div>
 

@@ -29,7 +29,7 @@ export default function RutaPage() {
       <div className="flex justify-between items-start w-full mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Ruta de Contenedores</h1>
-          <p className="text-slate-400 text-xs font-semibold mt-0.5">{"{{DATA:DOCUMENT:DOCUMENT_3}}"}</p>
+          <p className="text-slate-400 text-xs font-semibold mt-0.5">Monitorea el estado de los contenedores en tiempo real</p>
         </div>
         <div className="bg-slate-100 text-slate-600 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5">
           <RefreshCw className="w-3 h-3" />

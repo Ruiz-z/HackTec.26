@@ -131,9 +131,6 @@ export default function RetosPage() {
         })}
       </div>
 
-      <div className="mt-8 bg-white border border-slate-100 rounded-xl p-4 text-center font-mono text-[10px] text-slate-400 shadow-2xs">
-        {"{{DATA:DOCUMENT:DOCUMENT_5}}"}
-      </div>
     </div>
   );
 }

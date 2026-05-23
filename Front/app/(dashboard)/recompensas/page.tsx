@@ -133,10 +133,6 @@ export default function RecompensasPage() {
         })}
       </div>
 
-      <div className="mt-8 bg-white border border-slate-200/60 rounded-xl p-4 text-center font-mono text-[10px] text-slate-400 shadow-2xs">
-        {"{{DATA:DOCUMENT:DOCUMENT_7}}"}
-      </div>
-
     </div>
   );
 }
