@@ -7,7 +7,9 @@ export interface UserData {
   nombre: string
   email: string
   nivel: string
+  nivelNum: number
   xp: number
+  puntos: number
   rol: { id: number; nombre: string }
   permisos: string[]
 }
@@ -18,6 +20,7 @@ interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
@@ -47,6 +50,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user)
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    const stored = localStorage.getItem("ecoarcade_token")
+    if (!stored) return
+    try {
+      const res = await api.me(stored)
+      setUser(res.user)
+    } catch {
+      // ignore
+    }
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem("ecoarcade_token")
     setToken(null)
@@ -54,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

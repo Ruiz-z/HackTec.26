@@ -1,20 +1,39 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Trash2, AlertTriangle, Battery, Wifi, Truck, RefreshCw } from "lucide-react";
+import { api } from "@/lib/api";
 
-const mockBasureros = [
-  { id: "1", codigo: "B1", nombre: "Plaza Principal", nivelActual: 30, estado: "disponible" as const, bateria: 100, ultimoEvento: { usuario: "Pedro", tipo: "Vidrio", hace: "10m" } },
-  { id: "2", codigo: "B2", nombre: "Entrada Norte", nivelActual: 45, estado: "disponible" as const, bateria: 95, ultimoEvento: { usuario: "Carlos", tipo: "Papel", hace: "45m" } },
-  { id: "3", codigo: "B3", nombre: "Biblioteca Central", nivelActual: 98, estado: "lleno" as const, bateria: 100, ultimoEvento: { usuario: "Ana", tipo: "Plástico", hace: "2h" } },
-  { id: "4", codigo: "B4", nombre: "Cafetería Campus", nivelActual: 85, estado: "alerta" as const, bateria: 80, ultimoEvento: { usuario: "Sofía", tipo: "Metal", hace: "1h" } },
-  { id: "5", codigo: "B5", nombre: "Gimnasio", nivelActual: 0, estado: "offline" as const, bateria: 12, ultimoEvento: null },
-];
+type BasureroAPI = {
+  id: number; codigo: string; nombre: string; ubicacion: string;
+  lat: number | null; lng: number | null; capacidad: number;
+  nivelActual: number; estado: string; tiposAcepta: string;
+  bateria: number; online: boolean;
+  scans: { id: number; tipo: string; user: { nombre: string } | null; createdAt: string }[];
+}
 
 export default function RutaPage() {
-  const [selectedId, setSelectedId] = useState("3");
+  const [basureros, setBasureros] = useState<BasureroAPI[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const b = mockBasureros.find((item) => item.id === selectedId) || mockBasureros[2];
+  useEffect(() => {
+    api.getBasureros()
+      .then(data => { setBasureros(data); setLoading(false); if (data.length > 0) setSelectedId(String(data[0].id)) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const b = basureros.find(item => String(item.id) === selectedId) || basureros[0];
+
+  const ultimoScan = b?.scans?.[0]
+
+  const desde = (fecha: string) => {
+    const ms = Date.now() - new Date(fecha).getTime()
+    const mins = Math.floor(ms / 60000)
+    if (mins < 1) return 'ahora'
+    if (mins < 60) return `${mins}m`
+    return `${Math.floor(mins / 60)}h`
+  }
 
   const getEstilosNodo = (estado: string, isSelected: boolean) => {
     let colores = "border-slate-400 bg-slate-50 text-slate-500";
@@ -33,10 +52,16 @@ export default function RutaPage() {
         </div>
         <div className="bg-slate-100 text-slate-600 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5">
           <RefreshCw className="w-3 h-3" />
-          <span>Actualizado hace 1 min</span>
+          <span>{basureros.length} contenedores</span>
         </div>
       </div>
 
+      {loading ? (
+        <div className="text-center py-12 text-sm text-slate-400 font-medium">Cargando contenedores...</div>
+      ) : !b ? (
+        <div className="text-center py-12 text-sm text-slate-400 font-medium">No hay contenedores disponibles.</div>
+      ) : (
+      <>
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs mb-6">
         <h3 className="font-bold text-slate-800 text-sm mb-12">Estado de la Red</h3>
         
@@ -48,12 +73,12 @@ export default function RutaPage() {
             <div className="w-[25%] h-full bg-slate-200" />
           </div>
 
-          {mockBasureros.map((nodo) => {
-            const isSelected = nodo.id === selectedId;
+          {basureros.map((nodo) => {
+            const isSelected = String(nodo.id) === selectedId;
             return (
               <div key={nodo.id} className="flex flex-col items-center z-10">
                 <button
-                  onClick={() => setSelectedId(nodo.id)}
+                  onClick={() => setSelectedId(String(nodo.id))}
                   className={`w-14 h-14 rounded-full border-3 flex items-center justify-center transition-all cursor-pointer ${getEstilosNodo(nodo.estado, isSelected)}`}
                 >
                   {nodo.estado === "lleno" ? <AlertTriangle className="w-5 h-5" /> : <Trash2 className="w-5 h-5" />}
@@ -131,9 +156,9 @@ export default function RutaPage() {
             <h4 className="text-xs font-bold text-slate-800 mb-3">⏱️ Última Actividad</h4>
             <div className="bg-slate-50 border-l-4 border-[#046a53] p-3 rounded-r-xl">
               <p className="text-xs font-semibold text-slate-800">
-                "{b.ultimoEvento?.usuario || "Ana"} depositó plástico"
+                "{ultimoScan?.user?.nombre || "Usuario"} depositó {ultimoScan?.tipo || "reciclable"}"
               </p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Hace 2 horas</span>
+              <span className="text-[10px] text-slate-400 mt-1 block">{ultimoScan ? `Hace ${desde(ultimoScan.createdAt)}` : "Sin actividad"}</span>
             </div>
           </div>
 
@@ -151,6 +176,8 @@ export default function RutaPage() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+      </>
+      )}
+      </div>
+    );
+  }

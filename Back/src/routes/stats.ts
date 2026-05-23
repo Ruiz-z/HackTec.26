@@ -8,6 +8,15 @@ const CO2_MAP: Record<string, number> = {
   plastico: 0.5, papel: 0.4, aluminio: 0.4, error: 0.0,
 }
 
+// Árboles salvados por ítem reciclado
+// Papel: salva árboles directamente (1 ton papel ≈ 17 árboles → ~100g por ítem → 0.0017, redondeado a 0.05 para gamificación)
+// Plástico/Aluminio: impacto indirecto vía CO2
+const TREES_MAP: Record<string, number> = {
+  papel: 0.05,
+  plastico: 0.02,
+  aluminio: 0.03,
+}
+
 // GET /api/stats
 router.get('/', async (_req: Request, res: Response) => {
   try {
@@ -99,10 +108,21 @@ router.get('/impacto', async (_req: Request, res: Response) => {
     const totalCO2 = todos.reduce((acc, s) => acc + (CO2_MAP[s.tipo] ?? 0), 0)
     const totalReciclables = todos.filter(s => s.categoria === 'reciclable').length
 
+    const arbolesTotales = todos
+      .filter(s => s.categoria === 'reciclable')
+      .reduce((acc, s) => acc + (TREES_MAP[s.tipo] ?? 0), 0)
+
+    const arbolesPorTipo: Record<string, number> = {}
+    for (const s of todos.filter(s => s.categoria === 'reciclable')) {
+      const val = TREES_MAP[s.tipo] ?? 0
+      arbolesPorTipo[s.tipo] = Math.round(((arbolesPorTipo[s.tipo] ?? 0) + val) * 100) / 100
+    }
+
     res.json({
       totalScans: todos.length, totalReciclables,
       co2Total: Math.round(totalCO2 * 100) / 100,
-      arbolesEquivalentes: Math.round(totalCO2 / 21),
+      arbolesEquivalentes: Math.round(arbolesTotales * 100) / 100,
+      arbolesPorTipo,
       litrosAguaAhorrados: Math.round(totalReciclables * 2.5),
     })
   } catch {

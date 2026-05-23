@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, SwitchCamera, Sparkles, Lightbulb, CheckCircle2, CameraIcon } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import ModalTipScan from "@/components/escaneo/ModalTipScan";
 
 export default function EscaneoJuegoPage() {
+  const { user, refreshUser } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
@@ -79,9 +81,12 @@ export default function EscaneoJuegoPage() {
 
     setCapturando(true);
     try {
-      const res = await api.classifyImage(base64);
+      const res = await api.classifyImage(base64, user?.id);
       setResultado(res);
-      if (res && res.categoria !== 'error' && !res.error) setModalAbierto(true);
+      if (res && res.categoria !== 'error' && !res.error) {
+        setModalAbierto(true);
+        refreshUser();
+      }
     } catch (err: any) {
       setResultado({ error: err.message || "Error al clasificar" });
     } finally {

@@ -12,6 +12,7 @@ import retosRouter     from './routes/retos'
 import authRouter      from './routes/auth'
 import scanRouter      from './routes/scan'
 import binsRouter      from './routes/bins'
+import recompensasRouter from './routes/recompensas'
 
 dotenv.config()
 
@@ -41,6 +42,7 @@ app.use('/api/v1/retos',     retosRouter)
 app.use('/api/v1/auth',      authRouter)
 app.use('/api/v1/scan',      scanRouter)
 app.use('/api/v1/bins',      binsRouter)
+app.use('/api/v1/recompensas', recompensasRouter)
 
 app.use((_req, res) => res.status(404).json({ error: 'Ruta no encontrada' }))
 

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import prisma from '../lib/prisma'
 import { classifyImage, classifyOffline } from '../lib/claude'
 import { requireAuth, AuthRequest } from '../middleware/auth'
+import { calcularRecompensa, calcularNivel } from '../lib/nivel'
 
 const router = Router()
 
@@ -41,7 +42,12 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const esError = result.categoria === 'error'
-    const xpGanado = esError ? 0 : 15
+    const { ptsGanados, xpGanados, nivel: nivelInfo } = esError
+      ? { ptsGanados: 0, xpGanados: 0, nivel: { nombre: 'Eco Principiante', num: 1, multiplier: 1 } }
+      : await (async () => {
+          const user = userId ? await prisma.user.findUnique({ where: { id: userId }, select: { xp: true } }) : null
+          return calcularRecompensa(result.tipo, user?.xp || 0)
+        })()
 
     const scan = await prisma.scan.create({
       data: {
@@ -50,8 +56,8 @@ router.post('/', async (req: Request, res: Response) => {
         tipo: result.tipo,
         tip: result.tip,
         comoReciclar: result.comoReciclar,
-        puntos: esError ? 0 : result.puntos,
-        xpGanado,
+        puntos: ptsGanados,
+        xpGanado: xpGanados,
         confianza: modoOffline ? 0 : result.confianza,
         userId: userId || null,
         basureroId: basureroId || null,
@@ -62,13 +68,12 @@ router.post('/', async (req: Request, res: Response) => {
     if (userId && !esError) {
       const user = await prisma.user.update({
         where: { id: userId },
-        data: { puntos: { increment: result.puntos }, xp: { increment: xpGanado } },
+        data: { puntos: { increment: ptsGanados }, xp: { increment: xpGanados } },
       })
-      const nuevoNivel = calcularNivel(user.xp + xpGanado)
-      if (nuevoNivel.nombre !== user.nivel) {
+      if (nivelInfo.nombre !== user.nivel) {
         await prisma.user.update({
           where: { id: userId },
-          data: { nivel: nuevoNivel.nombre, nivelNum: nuevoNivel.num },
+          data: { nivel: nivelInfo.nombre, nivelNum: nivelInfo.num },
         })
       }
       usuarioActualizado = user
@@ -89,11 +94,11 @@ router.post('/', async (req: Request, res: Response) => {
     res.json({
       ...result,
       scanId: scan.id,
-      xpGanado,
+      xpGanado: xpGanados,
       modo: modoOffline ? 'offline' : 'ai',
       error: esError ? 'Residuo no admitido. Solo clasificamos plastico, papel y aluminio.' : undefined,
       usuario: usuarioActualizado
-        ? { puntos: usuarioActualizado.puntos, xp: usuarioActualizado.xp + xpGanado }
+        ? { puntos: usuarioActualizado.puntos, xp: usuarioActualizado.xp }
         : null,
     })
   } catch (error) {
@@ -119,15 +124,6 @@ router.get('/recientes', async (_req: Request, res: Response) => {
   }
 })
 
-function calcularNivel(xp: number): { nombre: string; num: number } {
-  if (xp >= 2000) return { nombre: 'Maestro Eco',     num: 15 }
-  if (xp >= 1200) return { nombre: 'Reciclador Pro',  num: 12 }
-  if (xp >= 700)  return { nombre: 'Eco Guardian',    num: 9  }
-  if (xp >= 300)  return { nombre: 'Eco Aprendiz',    num: 6  }
-  if (xp >= 100)  return { nombre: 'Eco Novato',      num: 3  }
-  return           { nombre: 'Eco Principiante',       num: 1  }
-}
-
 async function actualizarRetos(userId: number, tipo: string, basureroId?: number) {
   try {
     const retos = await prisma.reto.findMany({ where: { activo: true } })
@@ -149,7 +145,13 @@ async function actualizarRetos(userId: number, tipo: string, basureroId?: number
           where: { id: progreso.id },
           data: { completado: true, completadoAt: new Date() },
         })
-        await prisma.user.update({ where: { id: userId }, data: { xp: { increment: reto.xpRecompensa } } })
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            xp: { increment: reto.xpRecompensa },
+            puntos: { increment: reto.ptsRecompensa },
+          },
+        })
       }
     }
   } catch (err) {

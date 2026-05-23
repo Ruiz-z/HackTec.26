@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, AuthRequest } from '../middleware/auth'
 import prisma from '../lib/prisma'
 import { classifyImage, classifyOffline } from '../lib/claude'
+import { calcularRecompensa, calcularNivel } from '../lib/nivel'
 
 const router = Router()
 
@@ -47,7 +48,11 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
     const mismatch = !tiposAceptados.includes(result.tipo)
 
     const esError = result.categoria === 'error'
-    const xpGanado = esError ? 0 : 15
+
+    const userData = await prisma.user.findUnique({ where: { id: userId }, select: { xp: true } })
+    const { ptsGanados, xpGanados, nivel: nivelInfo } = esError
+      ? { ptsGanados: 0, xpGanados: 0, nivel: { nombre: 'Eco Principiante', num: 1, multiplier: 1 } }
+      : calcularRecompensa(result.tipo, userData?.xp || 0)
 
     if (esError) {
       const scan = await prisma.scan.create({
@@ -66,7 +71,7 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
         },
       })
       res.status(422).json({
-        error: 'Residuo no admitido. Solo clasificamos plastico, metal y aluminio.',
+        error: 'Residuo no admitido. Solo clasificamos plastico, papel y aluminio.',
         code: 'MATERIAL_NOT_ALLOWED',
         tipoDetectado: result.tipo,
         scanId: scan.id,
@@ -81,8 +86,8 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
         tipo: result.tipo,
         tip: result.tip,
         comoReciclar: result.comoReciclar,
-        puntos: result.puntos,
-        xpGanado,
+        puntos: ptsGanados,
+        xpGanado: xpGanados,
         confianza: modoOffline ? 0 : result.confianza,
         errorTipo: mismatch,
         userId,
@@ -107,11 +112,10 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { puntos: { increment: result.puntos }, xp: { increment: xpGanado } },
+      data: { puntos: { increment: ptsGanados }, xp: { increment: xpGanados } },
     })
-    const nuevoNivel = calcularNivel(user.xp + xpGanado)
-    if (nuevoNivel.nombre !== user.nivel) {
-      await prisma.user.update({ where: { id: userId }, data: { nivel: nuevoNivel.nombre, nivelNum: nuevoNivel.num } })
+    if (nivelInfo.nombre !== user.nivel) {
+      await prisma.user.update({ where: { id: userId }, data: { nivel: nivelInfo.nombre, nivelNum: nivelInfo.num } })
     }
 
     if (basurero) {
@@ -125,7 +129,7 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
     res.json({
       ...result,
       scanId: scan.id,
-      xpGanado,
+      xpGanado: xpGanados,
       modo: modoOffline ? 'offline' : 'ai',
       usuario: { puntos: user.puntos, xp: user.xp },
     })
@@ -134,15 +138,6 @@ router.post('/deposit', requireAuth, async (req: AuthRequest, res: Response) => 
     res.status(500).json({ error: 'Error interno' })
   }
 })
-
-function calcularNivel(xp: number): { nombre: string; num: number } {
-  if (xp >= 2000) return { nombre: 'Maestro Eco', num: 15 }
-  if (xp >= 1200) return { nombre: 'Reciclador Pro', num: 12 }
-  if (xp >= 700) return { nombre: 'Eco Guardian', num: 9 }
-  if (xp >= 300) return { nombre: 'Eco Aprendiz', num: 6 }
-  if (xp >= 100) return { nombre: 'Eco Novato', num: 3 }
-  return { nombre: 'Eco Principiante', num: 1 }
-}
 
 const MAPA_TIPO_ESP32: Record<string, string> = {
   plastico: 'plastico',

@@ -33,10 +33,10 @@ export const api = {
     }),
 
   // Classify
-  classifyImage: (base64Data: string) =>
+  classifyImage: (base64Data: string, userId?: number) =>
     fetcher<any>("/classify", {
       method: "POST",
-      body: JSON.stringify({ image: base64Data }),
+      body: JSON.stringify({ image: base64Data, userId }),
     }),
 
   // Bins
@@ -58,4 +58,14 @@ export const api = {
   // Scan
   scanQR: (token: string, botId: string) =>
     fetcher<any>(`/scan?botId=${botId}`, { headers: authHeaders(token) }),
+
+  // Recompensas
+  getRecompensas: () => fetcher<any[]>("/recompensas"),
+  getMisCanjes: (token: string) =>
+    fetcher<any[]>("/recompensas/mis-canjes", { headers: authHeaders(token) }),
+  canjearRecompensa: (token: string, id: number) =>
+    fetcher<any>(`/recompensas/canjear/${id}`, {
+      method: "POST",
+      headers: authHeaders(token),
+    }),
 }

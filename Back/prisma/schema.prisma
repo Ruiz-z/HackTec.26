@@ -40,6 +40,7 @@ model User {
   resetTokenExpiry DateTime?
   scans     Scan[]
   progresos ProgresoReto[]
+  canjes    Canje[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -87,6 +88,7 @@ model Reto {
   tipo         String
   meta         Int
   xpRecompensa Int            @default(100)
+  ptsRecompensa Int           @default(0)
   icono        String         @default("🌿")
   activo       Boolean        @default(true)
   progresos    ProgresoReto[]
@@ -112,4 +114,27 @@ model Tip {
   categoria String
   tipo      String
   contenido String
+}
+
+model Recompensa {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descripcion String
+  categoria   String
+  costo       Int
+  imagen      String
+  icono       String   @default("🎁")
+  nivelMinimo Int      @default(1)
+  disponible  Boolean  @default(true)
+  canjes      Canje[]
+  createdAt   DateTime @default(now())
+}
+
+model Canje {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  recompensaId Int
+  user         User       @relation(fields: [userId], references: [id])
+  recompensa   Recompensa @relation(fields: [recompensaId], references: [id])
+  createdAt    DateTime   @default(now())
 }

@@ -1,20 +1,22 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { QrCode, MapPin, FileText, PlayCircle } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function HomePage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   return (
     <div className="max-w-5xl mx-auto animate-fade-in relative min-h-[calc(100vh-6rem)] flex flex-col justify-between select-none">
       
       <div>
         <div className="mb-8">
-          <h1 className="text-4xl font-black text-slate-950 tracking-tight">Hola, Mauro</h1>
+          <h1 className="text-4xl font-black text-slate-950 tracking-tight">Hola, {user?.nombre || 'Mauro'}</h1>
           <div className="flex items-center gap-3 mt-2">
-            <span className="text-xs font-bold text-slate-500">Eco Principiante</span>
+            <span className="text-xs font-bold text-slate-500">{user?.nivel || 'Eco Principiante'}</span>
             <div className="bg-[#fcc419] text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
-              <span>☆</span> 0 XP
+              <span>☆</span> {user?.xp?.toLocaleString() || '0'} XP
             </div>
           </div>
         </div>
