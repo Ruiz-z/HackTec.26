@@ -73,7 +73,7 @@ async function main() {
     { titulo: 'Maestro del Plástico', descripcion: 'Recicla 5 residuos de plástico',            tipo: 'tipo_residuo', meta: 5,  xpRecompensa: 150, icono: '🥤' },
     { titulo: 'Explorador Urbano',    descripcion: 'Usa 3 basureros diferentes en la ruta',     tipo: 'explorar',     meta: 3,  xpRecompensa: 200, icono: '🗺️' },
     { titulo: 'Reciclador Dedicado',  descripcion: 'Recicla 25 residuos en total',              tipo: 'cantidad',     meta: 25, xpRecompensa: 300, icono: '🏆' },
-    { titulo: 'Rey del Vidrio',       descripcion: 'Recicla 5 residuos de vidrio',              tipo: 'tipo_residuo', meta: 5,  xpRecompensa: 150, icono: '🍾' },
+    { titulo: 'Rey del Plastico',     descripcion: 'Recicla 5 residuos de plastico',              tipo: 'tipo_residuo', meta: 5,  xpRecompensa: 150, icono: '🥤' },
   ]
   await prisma.reto.deleteMany()
   await prisma.reto.createMany({ data: retos })
@@ -95,6 +95,32 @@ async function main() {
     ],
   })
   console.log('✅ Scans de ejemplo listos')
+  // Tips educativos
+  await prisma.tip.deleteMany()
+  await prisma.tip.createMany({
+    data: [
+      // Plástico
+      { categoria: 'reciclable', tipo: 'plastico', contenido: 'Una botella de plástico tarda 450 años en degradarse en la naturaleza.' },
+      { categoria: 'reciclable', tipo: 'plastico', contenido: 'Reciclar 1 kg de plástico ahorra 2 kg de CO₂ respecto a producirlo desde cero.' },
+      { categoria: 'reciclable', tipo: 'plastico', contenido: 'Solo el 9% del plástico producido en el mundo ha sido reciclado alguna vez.' },
+      { categoria: 'reciclable', tipo: 'plastico', contenido: 'El plástico llega al océano y se fragmenta en microplásticos que ingieren los peces.' },
+      { categoria: 'reciclable', tipo: 'plastico', contenido: 'Con 25 botellas PET recicladas se puede fabricar una sudadera de polar.' },
+      // Metal
+      { categoria: 'reciclable', tipo: 'metal', contenido: 'Reciclar acero usa 75% menos energía que producirlo desde mineral de hierro.' },
+      { categoria: 'reciclable', tipo: 'metal', contenido: 'El acero es el material más reciclado del mundo: más del 80% se reutiliza.' },
+      { categoria: 'reciclable', tipo: 'metal', contenido: 'Una lata de acero reciclada regresa al estante de la tienda en solo 60 días.' },
+      { categoria: 'reciclable', tipo: 'metal', contenido: 'Reciclar 1 tonelada de acero ahorra 1.1 toneladas de mineral de hierro.' },
+      { categoria: 'reciclable', tipo: 'metal', contenido: 'El acero puede reciclarse infinitas veces sin perder sus propiedades.' },
+      // Aluminio
+      { categoria: 'reciclable', tipo: 'aluminio', contenido: 'Reciclar aluminio consume 95% menos energía que producirlo desde bauxita.' },
+      { categoria: 'reciclable', tipo: 'aluminio', contenido: 'Una lata de aluminio reciclada puede volver a ser una lata en tan solo 60 días.' },
+      { categoria: 'reciclable', tipo: 'aluminio', contenido: 'El aluminio es reciclable al 100% y sin límite de veces.' },
+      { categoria: 'reciclable', tipo: 'aluminio', contenido: 'En México se generan más de 90,000 toneladas de aluminio al año, gran parte termina en basureros.' },
+      { categoria: 'reciclable', tipo: 'aluminio', contenido: 'Reciclar 1 kg de aluminio evita emitir 9 kg de CO₂ a la atmósfera.' },
+    ],
+  })
+  console.log('✅ Tips educativos listos')
+
   console.log('\n🎉 Seed completo! EcoArcade listo.')
 }
 
