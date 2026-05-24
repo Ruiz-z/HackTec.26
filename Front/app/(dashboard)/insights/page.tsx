@@ -31,13 +31,14 @@ export default function InsightsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.getStats(), api.getImpacto()])
-      .then(([statsData, impactoData]) => {
-        setStats(statsData as StatsData);
-        setArboles({ total: impactoData.arbolesEquivalentes, porTipo: impactoData.arbolesPorTipo ?? {} });
-        setLoading(false);
-      })
-      .catch(() => setLoading(false))
+    api.getStats()
+      .then(data => setStats(data as StatsData))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+
+    api.getImpacto()
+      .then(data => setArboles({ total: data.arbolesEquivalentes ?? 0, porTipo: data.arbolesPorTipo ?? {} }))
+      .catch(() => {})
   }, [])
 
   const totalItems = stats?.porTipo?.reduce((acc, t) => acc + t._count.id, 0) || 0
