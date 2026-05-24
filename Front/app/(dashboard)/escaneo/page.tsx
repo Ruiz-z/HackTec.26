@@ -24,14 +24,24 @@ export default function EscaneoJuegoPage() {
 
   async function listarCamaras() {
     try {
-      // Primero pedir permiso para que enumerateDevices devuelva labels reales
+      // Pedir permiso genérico primero
       const temp = await navigator.mediaDevices.getUserMedia({ video: true })
       temp.getTracks().forEach(t => t.stop())
+
+      // También pedir facingMode environment para registrar la cámara trasera
+      try {
+        const back = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        back.getTracks().forEach(t => t.stop())
+      } catch { /* no hay cámara trasera */ }
+
+      // Esperar un ciclo para que los dispositivos se registren
+      await new Promise(r => setTimeout(r, 200))
 
       const devices = await navigator.mediaDevices.enumerateDevices()
       const cams = devices.filter(d => d.kind === 'videoinput')
       setCameras(cams)
       if (cams.length > 0) {
+        // Si hay múltiples, elegir la última (normalmente la trasera)
         const id = cams.length > 1 ? cams[cams.length - 1].deviceId : cams[0].deviceId
         await iniciarCamara(id)
       } else {
@@ -119,17 +129,19 @@ export default function EscaneoJuegoPage() {
               <span className="font-bold text-slate-800 text-xs">Cámara en Vivo</span>
             </div>
             {cameras.length > 1 && (
-              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-xl">
-                <SwitchCamera className="w-3.5 h-3.5 text-slate-500" />
-                <select
-                  value={selectedCameraId}
-                  onChange={(e) => iniciarCamara(e.target.value)}
-                  className="bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer"
+              <div className="flex items-center">
+                <button
+                  onClick={() => {
+                    const idx = cameras.findIndex(c => c.deviceId === selectedCameraId)
+                    const next = cameras[(idx + 1) % cameras.length]
+                    iniciarCamara(next.deviceId)
+                  }}
+                  className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+                  title="Cambiar cámara"
                 >
-                  {cameras.map((cam, idx) => (
-                    <option key={cam.deviceId} value={cam.deviceId}>{cam.label || `Cámara ${idx + 1}`}</option>
-                  ))}
-                </select>
+                  <SwitchCamera className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="text-[11px] font-bold text-slate-600 hidden sm:inline">Cambiar</span>
+                </button>
               </div>
             )}
           </div>
