@@ -25,7 +25,7 @@ router.get('/usuario/:userId', async (req: Request, res: Response) => {
 
     const retosConProgreso = retos.map(r => ({
       id: r.id, titulo: r.titulo, descripcion: r.descripcion,
-      tipo: r.tipo, meta: r.meta, xpRecompensa: r.xpRecompensa, icono: r.icono,
+      tipo: r.tipo, meta: r.meta, xpRecompensa: r.xpRecompensa, ptsRecompensa: r.ptsRecompensa, icono: r.icono,
       progreso: r.progresos[0]?.progreso ?? 0,
       completado: r.progresos[0]?.completado ?? false,
       completadoAt: r.progresos[0]?.completadoAt ?? null,

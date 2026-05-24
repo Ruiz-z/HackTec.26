@@ -53,7 +53,9 @@ router.post('/login', async (req: AuthRequest, res: Response) => {
         },
         permisos: user.role.permisos.map(p => p.nombre),
         nivel: user.nivel,
+        nivelNum: user.nivelNum,
         xp: user.xp,
+        puntos: user.puntos,
       },
     })
   } catch (error) {
@@ -89,7 +91,9 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
         },
         permisos: user.role.permisos.map(p => p.nombre),
         nivel: user.nivel,
+        nivelNum: user.nivelNum,
         xp: user.xp,
+        puntos: user.puntos,
       },
     })
   } catch (error) {
