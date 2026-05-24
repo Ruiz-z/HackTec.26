@@ -37,3 +37,13 @@ pnpm dev                # → http://localhost:3000
 ```
 
 Login with `mauro@eco.com` / `demo123`.
+
+## Contributors
+
+| | |
+|---|---|
+| **Ruiz-z** (Mauro Ruiz) | Developer — arquitectura, lógica de negocio, integración ESP32, sistemas de gamificación |
+| **Claude** (Anthropic) | AI assistant — generación de código, refactorización, debugging, y soporte en tiempo real durante el desarrollo |
+| **Oz Agent** (OpenCode) | AI agent — ejecución autónoma de tareas repetitivas, refactors masivos, y commits rápidos para optimizar tiempos de entrega |
+
+> Claude y Oz Agent se utilizaron como herramientas de apoyo para lluvia de ideas, generación de boilerplate, debugging acelerado, y ejecución de commits frecuentes durante el sprint, permitiendo iterar rápido y mantener el ritmo de desarrollo dentro del hackathon.
