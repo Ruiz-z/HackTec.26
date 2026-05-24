@@ -42,33 +42,6 @@ Los basureros inteligentes usan **ESP32** con sensores de nivel de llenado y com
 
 El diseño de la interfaz fue creado en **Stitch**, una herramienta de diseño colaborativo. Las maquetas se utilizaron como base para desarrollar el frontend de EcoArcade, sirviendo como guía visual para la estructura de cada pantalla, paleta de colores, tipografía, y componentes.
 
-> *(Las capturas fueron exportadas desde Stitch y están organizadas por pantalla a continuación)*
-
-### Pantalla de inicio de sesión
-![Login](web application/stitch/projects/6305240234289255980/screens/8797f1b9b09642e0badff22541eb6e95)
-
-### Home / Dashboard
-![Home](web application/stitch/projects/6305240234289255980/screens/b43d05a31a8a417a8857bc0580abccbf)
-
-### Clasificador de residuos
-![Escaneo](web application/stitch/projects/6305240234289255980/screens/b6cd9aa502b14e63a0163ac0296104bf)
-
-### Ruta de basureros
-![Ruta](web application/stitch/projects/6305240234289255980/screens/7c6dbcb40dd64a68af20af34511c48ce)
-
-### Retos activos
-![Retos](web application/stitch/projects/6305240234289255980/screens/a22f725027d84c4fbae178bb356ba275)
-
-### Tienda de recompensas
-![Recompensas](<img width="1600" height="892" alt="image" src="https://github.com/user-attachments/assets/3a286626-572e-47ce-a644-535d72e70903" />
-)
-
-### Ranking global
-![Ranking](web application/stitch/projects/6305240234289255980/screens/9d831fbcffc54bed9d0d880ac1b53585)
-
-### Administración
-![Admin](web application/stitch/projects/6305240234289255980/screens/1eeb1f0f1c5f402399eb3916e92773cd)
-
 ## Project structure
 
 ```
